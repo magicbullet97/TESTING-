@@ -12,9 +12,7 @@ from pyrogram.errors.exceptions.bad_request_400 import UserNotParticipant
 from pyrogram.errors import FloodWait
 from database.database import *
 
-
-
-#used for cheking if a user is admin ~Owner also treated as admin level
+# used for checking if a user is admin ~Owner also treated as admin level
 async def check_admin(filter, client, update):
     try:
         user_id = update.from_user.id       
@@ -44,12 +42,10 @@ async def is_subscribed(client, user_id):
 
     return True
 
-
 async def is_sub(client, user_id, channel_id):
     try:
         member = await client.get_chat_member(channel_id, user_id)
         status = member.status
-        #print(f"[SUB] User {user_id} in {channel_id} with status {status}")
         return status in {
             ChatMemberStatus.OWNER,
             ChatMemberStatus.ADMINISTRATOR,
@@ -60,15 +56,12 @@ async def is_sub(client, user_id, channel_id):
         mode = await db.get_channel_mode(channel_id)
         if mode == "on":
             exists = await db.req_user_exist(channel_id, user_id)
-            #print(f"[REQ] User {user_id} join request for {channel_id}: {exists}")
             return exists
-        #print(f"[NOT SUB] User {user_id} not in {channel_id} and mode != on")
         return False
 
     except Exception as e:
         print(f"[!] Error in is_sub(): {e}")
         return False
-
 
 async def encode(string):
     string_bytes = string.encode("ascii")
@@ -77,11 +70,11 @@ async def encode(string):
     return base64_string
 
 async def decode(base64_string):
-    base64_string = base64_string.strip("=") # links generated before this commit will be having = sign, hence striping them to handle padding errors.
-    base64_bytes = (base64_string + "=" * (-len(base64_string) % 4)).encode("ascii")
-    string_bytes = base64.urlsafe_b64decode(base64_bytes) 
-    string = string_bytes.decode("ascii")
-    return string
+    # Ensure proper padding for base64 decoding
+    base64_string += "=" * (-len(base64_string) % 4)
+    base64_bytes = base64_string.encode("ascii")
+    string_bytes = base64.urlsafe_b64decode(base64_bytes)
+    return string_bytes.decode("ascii")
 
 async def get_messages(client, message_ids):
     messages = []
@@ -114,8 +107,8 @@ async def get_message_id(client, message):
     elif message.forward_sender_name:
         return 0
     elif message.text:
-        pattern = "https://t.me/(?:c/)?(.*)/(\d+)"
-        matches = re.match(pattern,message.text)
+        pattern = r"https://t.me/(?:c/)?(.*)/(\d+)"
+        matches = re.match(pattern, message.text)
         if not matches:
             return 0
         channel_id = matches.group(1)
@@ -128,7 +121,6 @@ async def get_message_id(client, message):
                 return msg_id
     else:
         return 0
-
 
 def get_readable_time(seconds: int) -> str:
     count = 0
@@ -150,7 +142,6 @@ def get_readable_time(seconds: int) -> str:
     time_list.reverse()
     up_time += ":".join(time_list)
     return up_time
-
 
 def get_exp_time(seconds):
     periods = [('days', 86400), ('hours', 3600), ('mins', 60), ('secs', 1)]
